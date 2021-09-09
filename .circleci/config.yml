@@ -3,33 +3,31 @@ version: 2.1
 commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:
-      # Add parameter here   
+     
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            # Your code here
-            exit 1
+            aws cloudformation delete-stack --stack-name prod-backend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
-    parameters:
+    #parameters:
       # Add parameter here     
     steps:
       - run:
           name: Revert migrations
           # Add when this will run
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
-            if(( $SUCCESS==1 )); 
+            statuscheck=$(curl -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request GET https://api.memstash.io/values/<< pipeline.id >>_migrations)
+            if(( $statuscheck=="true")); 
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+            echo "Reverting the changes"
+            npm run migrations:revert
+            else
+            echo "no migration occured"           
             fi
             
 jobs:
@@ -43,8 +41,9 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # Your code here
-            exit 1
+            cd frontend
+            npm install
+            npm build
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -59,8 +58,11 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             # Your code here
-             exit 1
+            cd backend
+            npm install
+            npm build
+            npm audit fix
+            exit 1
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
@@ -68,7 +70,18 @@ jobs:
   test-frontend:
     docker:
       # Docker image here
+      - image: circleci/node:13.8.0
     steps:
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            npm audit fix
+            npm install
+            npm run test
       # Checkout code from git
       # Restore from cache
       # Your job code here
@@ -76,29 +89,36 @@ jobs:
   test-backend:
     docker:
       # Docker image here
+      - image: circleci/node:13.8.0
     steps:
+      - checkout
       # Checkout code from git
       # Restore from cache
       # Your job code here
             
   scan-frontend:
     docker:
+    - image: circleci/node:13.8.0
       # Docker image here
     steps:
+      - checkout
       # Checkout code from git
       # Restore from cache
       # Your job code here
 
   scan-backend:
     docker:
+    - image: circleci/node:13.8.0
       # Docker image here
     steps:
+      - checkout
       # Checkout code from git
       # Restore from cache
       # Your job code here
 
   deploy-infrastructure:
     docker:
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -133,6 +153,7 @@ jobs:
 
   configure-infrastructure:
     docker:
+      - image: python:3.7-alpine3.11
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
@@ -152,6 +173,7 @@ jobs:
 
   run-migrations:
     docker:
+      - image: circleci/node:13.8.0
       # Docker image here that supports NodeJS
     steps:
       # Checkout code from git
@@ -169,6 +191,7 @@ jobs:
 
   deploy-frontend:
     docker:
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -189,7 +212,9 @@ jobs:
       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
+    
     docker:
+      - image: python:3.7-alpine3.11
       # Docker image here that supports Ansible
     steps:
       # Checkout code from git
@@ -207,6 +232,7 @@ jobs:
 
   smoke-test:
     docker:
+      - image: python:3.7-alpine3.11
       # Lightweight Docker image 
     steps:
       # Checkout code from git
@@ -230,6 +256,7 @@ jobs:
 
   cloudfront-update:
     docker:
+      - image: amazon/aws-cli
       # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
@@ -245,6 +272,7 @@ jobs:
 
 cleanup:
     docker:
+      - image: amazon/aws-cli
       # Docker image here
     steps:
       # Checkout code from git
