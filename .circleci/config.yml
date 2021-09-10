@@ -329,48 +329,43 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "a4:42:83:01:5d:70:3b:77:55:f0:23:a7:3c:57:8e:39"
-      - attach_workspace:
-          at: .circleci/ansible/
-      - store_artifacts: # See circleci.com/docs/2.0/artifacts/ for more details.
-          path: .circleci/ansible/inventory
-          destination: artifact-file
       - run:
           name: Install dependencies
-          no_output_timeout: 30m
           command: |
-            apk add --update tar gzip ansible nodejs npm
-            pip install awscli
+            apk add --no-cache curl
+            apk add --no-cache --upgrade bash
+            apk add --no-cache --update ansible
+            apk add --no-cache openssh-client
+            pip3 install awscli
       - run:
-          name: deploy backend
-          no_output_timeout: 60m
+          name: Set up inventory file
           command: |
-            echo ENVIROMENT=development > "backend/.env"
+            cd .circleci/ansible
+            echo "[web]" >> inventory.txt
+            URLS=$(curl -H "token: 46379a95-9d53-46f2-becb-d0e5c670441f" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID})
+            echo "$URLS" >> inventory.txt
+            cat inventory.txt      
+            
+      - run: 
+          name: Deploy backend
+          command: |
+            echo ENVIROMENT=production > "backend/.env"
             echo TYPEORM_CONNECTION=postgres >> "backend/.env"
-            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
             echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
-            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
             echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
             echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
             echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            cat backend/.env
             tar -C backend -czvf artifact.tar.gz .
-            cd .circleci/ansible
-            pwd
             ls -la
-            ansible-playbook -i ~/project/inventory deploy-backend.yml
-      
-      - run: cat .circleci/ansible/inventory
-      - run:
-          name: Deploy backend
-          no_output_timeout: 60m
-          command: |
-            cat .circleci/ansible/inventory
-            printenv >> ./backend/.env
-            cat ./backend/.env
-            ansible-playbook -i .circleci/ansible/inventory .circleci/ansible/deploy-backend.yml
-      - destroy-environment
-      - revert-migrations
+            ansible-galaxy install weareinteractive.environment
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /tmp/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+      # - revert-migrations
+      - destroy-environment  
 
       # Here's where you will add some code to rollback on failure  
 
