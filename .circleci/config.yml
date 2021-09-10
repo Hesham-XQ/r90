@@ -239,8 +239,7 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
             touch dbmigrationresults
-            cd backend
-            npm run migrations > dbmigrationresults
+            npm run migrations >> dbmigrationresults
             cat dbmigrationresults
       - run:
           name: Send migration results to memstash
