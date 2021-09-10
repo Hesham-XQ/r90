@@ -371,11 +371,24 @@ jobs:
             echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> "backend/.env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+
+
+
+      - run:
+          name: Compress Backend
+          command: |
             tar -C backend -czvf artifact.tar.gz .
-            cd .circleci/ansible
-            pwd
             ls -la
-            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+      - run:
+          name: Deploy Backend
+          no_output_timeout: 30m
+          command: |
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml      
+            # tar -C backend -czvf artifact.tar.gz .
+            # cd .circleci/ansible
+            # pwd
+            # ls -la
+            # ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
             
             # - destroy-environment 
 
