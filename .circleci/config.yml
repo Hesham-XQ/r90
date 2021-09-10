@@ -151,6 +151,13 @@ jobs:
       # Checkout code from git
       - checkout
       - run:
+          name: installing required software
+          command: |
+            yum install tar -y
+            yum install gzip -y
+            yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+            yum install jq -y
+      - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
@@ -182,24 +189,35 @@ jobs:
       # Here's where you will add some code to rollback on failure      
 
   # configure-infrastructure:
+    
   #   docker:
   #     - image: python:3.7-alpine3.11
-  #     # Docker image here that supports Ansible
   #   steps:
-  #     # Checkout code from git
-  #     # Add ssh keys with fingerprint
-  #     # attach workspace
+  #     - checkout
+  #     - add_ssh_keys:
+  #         fingerprints:
+  #           - "a4:42:83:01:5d:70:3b:77:55:f0:23:a7:3c:57:8e:39"
+  #     - attach_workspace:
+  #         at: .circleci/ansible/
   #     - run:
   #         name: Install dependencies
   #         command: |
-  #           # Your code here
-  #           exit 1
+  #           apk add --update ansible
+  #     - run:
+  #         name: installation of pip and aws cli
+  #         command: |
+  #           apk add --no-cache \
+  #           python3 \
+  #           py3-pip \
+  #           && pip3 install --upgrade pip \
+  #           && pip3 install \
+  #           awscli \
+  #           && rm -rf /var/cache/apk/*
   #     - run:
   #         name: Configure server
+  #         no_output_timeout: 30m
   #         command: |
-  #           # Your code here
-  #           exit 1
-  #     # Here's where you will add some code to rollback on failure      
+  #           ansible-playbook -i .circleci/ansible/inventory .circleci/ansible/configure-server.yml    
 
   # run-migrations:
   #   docker:
