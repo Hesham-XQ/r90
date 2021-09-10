@@ -331,6 +331,9 @@ jobs:
             - "a4:42:83:01:5d:70:3b:77:55:f0:23:a7:3c:57:8e:39"
       - attach_workspace:
           at: .circleci/ansible/
+      - store_artifacts: # See circleci.com/docs/2.0/artifacts/ for more details.
+          path: .circleci/ansible/inventory
+          destination: artifact-file
       - run:
           name: Install dependencies
           command: |
@@ -377,29 +380,37 @@ jobs:
 
       # Here's where you will add some code to rollback on failure  
 
-  # smoke-test:
-  #   docker:
-  #     - image: python:3.7-alpine3.11
-  #     # Lightweight Docker image 
-  #   steps:
-  #     # Checkout code from git
-  #     - run:
-  #         name: Install dependencies
-  #         command: |
-  #           # your code here
-  #     - run:
-  #         name: Get backend url
-  #         command: |
-  #           # your code here
-  #     - run:
-  #         name: Backend smoke test.
-  #         command: |
-  #           # your code here
-  #     - run:
-  #         name: Frontend smoke test.
-  #         command: |
-  #           # your code here
-  #     # Here's where you will add some code to rollback on failure  
+  smoke-test:
+    docker:
+      - image: python:3.7-alpine3.11
+      # Lightweight Docker image 
+    steps:
+      - checkout
+      - amazonservices
+      - attach_workspace:
+          at: .circleci/ansible/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update tar gzip ansible nodejs npm curl jq
+      - run:
+          name: Get backend url
+          command: |
+            cat ./.circleci/ansible/backendip
+            backend_ip=$(cat .circleci/ansible/backendip)
+            echo "http://$backend_ip:3030"
+            curl "http://$backend_ip:3030/api/status"
+      - run:
+          name: Frontend smoke test.
+          command: |
+            if curl -s  "http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com" | grep "Welcome"
+            then
+              return 0
+            else
+              return 1
+            fi
+      - destroy-environment
+      # Here's where you will add some code to rollback on failure  
 
   # cloudfront-update:
   #   docker:
@@ -464,8 +475,8 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      # - smoke-test:
-      #     requires: [deploy-backend, deploy-frontend]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
       #     requires: [smoke-test]
       # - cleanup:
