@@ -218,7 +218,7 @@ jobs:
           no_output_timeout: 30m
           command: |
             ansible-playbook -i .circleci/ansible/inventory .circleci/ansible/configure-server.yml    
-
+ 
   run-migrations:
     docker:
       # Docker image here that supports NodeJS
