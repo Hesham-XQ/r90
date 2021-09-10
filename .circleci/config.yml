@@ -257,6 +257,7 @@ jobs:
             # touch dbmigrationresults
             # npm run migrations >> dbmigrationresults
             # cat dbmigrationresults
+            
       - run:
           name: Send migration results to memstash
           command: |
