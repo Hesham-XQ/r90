@@ -386,7 +386,6 @@ jobs:
       # Lightweight Docker image 
     steps:
       - checkout
-      - amazonservices
       - attach_workspace:
           at: .circleci/ansible/
       - run:
