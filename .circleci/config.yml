@@ -314,9 +314,9 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-            aws s3 cp frontend/dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+            aws s3 cp ./frontend/dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
       - destroy-environment
-      - revert-migrations
+      # - revert-migrations
       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
@@ -329,6 +329,13 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - "a4:42:83:01:5d:70:3b:77:55:f0:23:a7:3c:57:8e:39"
+      - attach_workspace:
+          at: .circleci/ansible/
+      - run:
+          name: Install required
+          command: |
+            yum -y install tar
+            yum -y install gzip
       - run:
           name: Install dependencies
           command: |
@@ -342,8 +349,13 @@ jobs:
           command: |
             cd .circleci/ansible
             echo "[web]" >> inventory.txt
-            URLS=$(curl -H "token: 46379a95-9d53-46f2-becb-d0e5c670441f" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID})
-            echo "$URLS" >> inventory.txt
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --output text >> .circleci/ansible/inventory.txt
+
+            # URLS=$(curl -H "token: 46379a95-9d53-46f2-becb-d0e5c670441f" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID})
+            # echo "$URLS" >> inventory.txt
             cat inventory.txt      
             
       - run: 
