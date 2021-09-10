@@ -260,6 +260,7 @@ jobs:
       - run:
           name: Send migration results to memstash
           command: |
+            cd ./backend 
             if grep "successfully" migrations_ouput.txt
             then 
             curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request PUT --data "true" https://api.memstash.io/values/<< pipeline.id >>_migrations
@@ -267,7 +268,7 @@ jobs:
             curl -H "Content-Type: text/plain" -H "token: ${CIRCLE_WORKFLOW_ID:0:7}" --request PUT --data "false" https://api.memstash.io/values/<< pipeline.id >>_migrations
             fi
       - destroy-environment
-      - revert-migrations
+      # revert-migrations
 
      # Here's where you will add some code to rollback on failure      
 
