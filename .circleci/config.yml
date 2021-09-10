@@ -348,7 +348,7 @@ jobs:
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
-              --output text >> .circleci/ansible/inventory.txt
+              --output text >> inventory.txt
 
             # URLS=$(curl -H "token: 46379a95-9d53-46f2-becb-d0e5c670441f" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID})
             # echo "$URLS" >> inventory.txt
