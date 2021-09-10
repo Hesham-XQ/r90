@@ -332,11 +332,6 @@ jobs:
       - attach_workspace:
           at: .circleci/ansible/
       - run:
-          name: Install required
-          command: |
-            yum -y install tar
-            yum -y install gzip
-      - run:
           name: Install dependencies
           command: |
             apk add --update tar gzip
