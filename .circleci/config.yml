@@ -1,25 +1,62 @@
 version: 2.1
 
 commands:
+
+
+
+
   destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-     
+    description: Destroy back-end and front-end cloudformation stacks given a workflow ID
+    parameters:
+      workflow-id:
+        type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
     steps:
-
       - run:
-          name: get CLI
+          name: Install AWS CLI if not Exist
           when: on_fail
           command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-
+            if ! [ -x "$(command -v aws)" ]; then
+            pip install awscli
+            else
+            echo "AWS CLI already installed"
+            fi
       - run:
-          name: Destroy environments
+          name: Destroy S3 Buckets
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name prod-backend-${CIRCLE_WORKFLOW_ID:0:7}
-            aws cloudformation delete-stack --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws s3 rm s3://Udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+            aws s3 rb s3://Udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7} --force
+      - run:
+          name: Destroy Stacks
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name Udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name Udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+  # destroy-environment:
+  #   description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+     
+  #   steps:
+
+  #     - run:
+  #         name: get CLI
+  #         when: on_fail
+  #         command: |
+  #           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  #           unzip awscliv2.zip
+  #           sudo ./aws/install
+
+  #     - run:
+  #         name: Destroy environments
+  #         when: on_fail
+  #         command: |
+  #           aws cloudformation delete-stack --stack-name prod-backend-${CIRCLE_WORKFLOW_ID:0:7}
+  #           aws cloudformation delete-stack --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+  #     - run:
+  #               name: Deleting the S3 bucket and files
+  #               when: on_fail
+  #               command: |
+  #                 aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
 
   revert-migrations:
       description: Revert the last migration if successfully run in the current workflow.
