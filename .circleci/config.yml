@@ -1,10 +1,6 @@
 version: 2.1
 
 commands:
-
-
-
-
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID
     parameters:
@@ -29,30 +25,6 @@ commands:
             aws cloudformation delete-stack --stack-name Udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name Udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-  # destroy-environment: 
-  #   description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-     
-  #   steps:
-
-  #     - run:
-  #         name: get CLI
-  #         when: on_fail
-  #         command: |
-  #           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-  #           unzip awscliv2.zip
-  #           sudo ./aws/install
-
-  #     - run:
-  #         name: Destroy environments
-  #         when: on_fail
-  #         command: |
-  #           aws cloudformation delete-stack --stack-name prod-backend-${CIRCLE_WORKFLOW_ID:0:7}
-  #           aws cloudformation delete-stack --stack-name prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}
-  #     - run:
-  #               name: Deleting the S3 bucket and files
-  #               when: on_fail
-  #               command: |
-  #                 aws s3 rm s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
 
   revert-migrations:
       description: Revert the last migration if successfully run in the current workflow.
@@ -312,8 +284,6 @@ jobs:
             fi
       - destroy-environment
       - revert-migrations
-      # revert-migrations
-
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -359,8 +329,8 @@ jobs:
           name: Deploy frontend objects
           command: |
             aws s3 cp ./frontend/dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
-      # - destroy-environment
-      # - revert-migrations
+      - destroy-environment
+      - revert-migrations
       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
@@ -397,10 +367,7 @@ jobs:
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> inventory.txt
               cat inventory.txt 
-# get the token for you
-# URLS=$(curl -H "token: 46379a95-9d53-46f2-becb-d0e5c670441f" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID})
-# echo "$URLS" >> inventory.txt
-                 
+
             
       - run: 
           name: Deploy backend
@@ -428,28 +395,7 @@ jobs:
           no_output_timeout: 30m
           command: |
             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml      
-            
-            
-            
-      # tar -C backend -czvf artifact.tar.gz .
-      # cd .circleci/ansible
-      # pwd
-      # ls -la
-      # ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-      
-      # - destroy-environment 
 
-
-      # cat backend/.env
-      # tar -C backend -czvf artifact.tar.gz .
-      # ls -la
-      # ansible-galaxy install weareinteractive.environment
-      # ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /tmp/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-      # - revert-migrations
-      
-
-      # Here's where you will add some code to rollback on failure  
-     
   smoke-test:
     docker:
       - image: python:3.7-alpine3.11
