@@ -59,6 +59,3 @@ Resources:
       EIP: !Ref NatGatewayEIP
       InstanceId: !Ref EC2Instance
 
-      Tags:
-        - Key: Name
-          Value: !Sub backend-${ID}
