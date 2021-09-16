@@ -182,7 +182,7 @@ jobs:
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
               URLS=$(aws ec2 describe-instances --region us-east-1 --query "Reservations[*].Instances[*].PublicIpAddress" --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}"   --output text)
               echo "URLS=$URLS" 
-              curl -H "Content-Type: text/plain" -H "token: 3869e8fb-542c-4fb8-b1e3-83d68f3a55d5" --request PUT --data "$URLS" https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7}
+              curl -H "Content-Type: text/plain" -H "token: 10914e3b-f118-4ad5-99e0-72d08f8ec38f" --request PUT --data "$URLS" https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -236,8 +236,7 @@ jobs:
           name: Configure server
           no_output_timeout: 30m
           command: |
-            
-            URLS=$(curl -H "token: 3869e8fb-542c-4fb8-b1e3-83d68f3a55d5" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7})
+            URLS=$(curl -H "token: 10914e3b-f118-4ad5-99e0-72d08f8ec38f" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7})
             cd .circleci/ansible 
             echo [web] > inventory.txt
             echo $URLS >> inventory.txt
@@ -245,7 +244,7 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml
             
   
-  
+
   # URLS=$(curl -H "token: 3869e8fb-542c-4fb8-b1e3-83d68f3a55d5" --request GET https://api.memstash.io/values/url_${CIRCLE_WORKFLOW_ID:0:7})
   # cd .circleci/ansible 
   # echo [web] > inventory.txt
