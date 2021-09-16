@@ -188,6 +188,7 @@ jobs:
               --tags project=udapeople \
               --stack-name "prod-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run: echo [web] > .circleci/ansible/inventory
       - run:
           name: Add back-end ip to ansible inventory
           command: |
@@ -228,18 +229,13 @@ jobs:
             && pip3 install \
             awscli \
             && rm -rf /var/cache/apk/*
+
       - run:
           name: Configure server
           no_output_timeout: 30m
           command: |
-            INSTANCE_IP=$(curl -H "token: ${CIRCLE_WORKFLOW_ID}" --request GET https://api.memstash.io/values/instance_ip)
-            echo ${INSTANCE_IP}
-            cd .circleci/ansible/
-            ls
-            echo ${INSTANCE_IP} >> ./inventory.txt
-            cat ./inventory.txt
-            export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook -i ./inventory.txt configure-server.yml
+            cat .circleci/ansible/inventory
+            ansible-playbook -i .circleci/ansible/inventory .circleci/ansible/configure-server.yml
             
   #ansible-playbook -i .circleci/ansible/inventory .circleci/ansible/configure-server.yml    
  
