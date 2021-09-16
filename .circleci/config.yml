@@ -463,7 +463,7 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
-            aws cloudformation update-stack --use-previous-template --stack-name udapeople-cloudfront --parameters ParameterKey=WorkflowID,ParameterValue=${CIRCLE_WORKFLOW_ID:0:7},UsePreviousValue=false
+            aws cloudformation update-stack --use-previous-template --stack-name udapeople-cloudfront-${CIRCLE_WORKFLOW_ID:0:7} --parameters ParameterKey=WorkflowID,ParameterValue=${CIRCLE_WORKFLOW_ID:0:7},UsePreviousValue=false
            
       - destroy-environment
       - revert-migrations
